@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра Виселица</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .theme-selection, .word-display, .controls { margin-top: 20px; }
+        .letter { display: inline-block; width: 30px; height: 30px; line-height: 30px; margin: 5px; text-align: center; cursor: pointer; border-radius: 4px; }
+        .correct { background-color: lightgreen; }
+        .incorrect { background-color: lightcoral; }
+        .word-letters { font-size: 24px; margin-bottom: 20px; letter-spacing: 10px; }
+        .hint { margin-top: 10px; font-style: italic; }
+        .exit-button { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="theme-selection">
+    <h2>Выберите Тему</h2>
+    <select id="theme-select">
+        <!-- Опции тем загружаются из API -->
+    </select>
+    <button onclick="startGame()">Играть</button>
+</div>
+
+<div class="game-view" style="display:none;">
+    <div class="word-display">
+        <div id="theme-info">Тема: <span id="theme-name"></span></div>
+        <div id="attempts">Осталось попыток: 6</div>
+        <div class="word-letters" id="word-letters"></div>
+    </div>
+    <div class="hint">
+        <span>Подсказок осталось: <span id="hint-count"></span></span>
+        <button onclick="useHint()">Подсказка</button>
+    </div>
+    <div class="exit-button">
+        <button onclick="exitTheme()">Выйти из темы</button>
+    </div>
+
+    <div class="controls" id="letters">
+        <!-- Буквы алфавита, сгенерированные с помощью JavaScript -->
+    </div>
+</div>
+
+<script>
+    let attemptsLeft = 6;
+    let currentWord = '';
+    let themeId = '';
+    let themeName = '';
+    let initialHints = 0;  // Изначальное количество подсказок на тему
+    let hintsLeft = 3;     // Текущее количество оставшихся подсказок
+    let revealedLetters = [];
+    let usedWords = [];    // Массив для хранения отгаданных слов в текущей сессии
+
+    async function fetchThemes() {
+        try {
+            const response = await fetch('/api/hangman/theme');
+            const themes = await response.json();
+            const themeSelect = document.getElementById('theme-select');
+            themeSelect.innerHTML = '';
+            themes.forEach(theme => {
+                const option = document.createElement('option');
+                option.value = theme.id;
+                option.textContent = theme.theme;
+                themeSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке тем:', error);
+        }
+    }
+
+    async function startGame() {
+        const themeSelect = document.getElementById('theme-select');
+        themeId = themeSelect.value;
+        themeName = themeSelect.options[themeSelect.selectedIndex].text;
+        if (!themeId) {
+            alert('Пожалуйста, выберите тему!');
+            return;
+        }
+        usedWords = [];  // Очищаем список отгаданных слов при выборе новой темы
+        document.querySelector('.theme-selection').style.display = 'none';
+        document.querySelector('.game-view').style.display = 'block';
+        resetAttempts();
+
+        // Устанавливаем количество подсказок на всю тему (не сбрасывается между словами)
+        await fetchNewWord(); // Загружаем первое слово
+        if (initialHints === 0) {
+            initialHints = 3;
+            hintsLeft = initialHints;
+        }
+
+        document.getElementById('hint-count').textContent = hintsLeft;
+        document.getElementById('theme-name').textContent = themeName;
+        generateLetterControls();
+    }
+
+    async function fetchNewWord() {
+        try {
+            const response = await fetch(`/api/hangman/words?themeId=${themeId}`);
+            const words = await response.json();
+            if (words.length === 0) {
+                alert('Не найдено слов для этой темы!');
+                resetGame();
+                return;
+            }
+            const randomWordObject = words[Math.floor(Math.random() * words.length)];
+            currentWord = randomWordObject.word.toUpperCase();
+            revealedLetters = Array(currentWord.length).fill(false);
+            displayWord();
+            document.getElementById('hint-count').textContent = hintsLeft;
+            document.getElementById('theme-name').textContent = themeName;
+        } catch (error) {
+            console.error('Ошибка при загрузке слова:', error);
+            alert('Не удалось загрузить слово. Попробуйте позже.');
+            resetGame();
+        }
+    }
+
+    function displayWord() {
+        const wordLetters = document.getElementById('word-letters');
+        wordLetters.innerHTML = currentWord.split('').map((letter, idx) =>
+            revealedLetters[idx] ? letter : '_').join(' ');
+    }
+
+    function generateLetterControls() {
+        const lettersDiv = document.getElementById('letters');
+        lettersDiv.innerHTML = '';
+        const alphabet = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
+        alphabet.split('').forEach(letter => {
+            const button = document.createElement('button');
+            button.textContent = letter;
+            button.className = 'letter';
+            button.onclick = () => handleGuess(letter);
+            lettersDiv.appendChild(button);
+        });
+    }
+
+    function handleGuess(letter) {
+        if (attemptsLeft === 0 || revealedLetters.every(Boolean)) return;
+
+        const buttons = document.querySelectorAll('button.letter');
+        buttons.forEach(button => {
+            if (button.textContent === letter && !button.disabled) {
+                button.disabled = true;
+                let isCorrect = false;
+                currentWord.split('').forEach((char, index) => {
+                    if (char === letter.toUpperCase()) {
+                        revealedLetters[index] = true;
+                        isCorrect = true;
+                    }
+                });
+
+                if (isCorrect) {
+                    button.classList.add('correct');
+                    displayWord();
+                    checkWin();
+                } else {
+                    button.classList.add('incorrect');
+                    attemptsLeft--;
+                    document.getElementById('attempts').textContent = `Осталось попыток: ${attemptsLeft}`;
+                    if (attemptsLeft === 0) endGame(false);
+                }
+            }
+        });
+    }
+
+    function useHint() {
+        if (hintsLeft <= 0 || attemptsLeft === 0) return;
+
+        let hintLetter = null;
+        currentWord.split('').forEach((letter, index) => {
+            if (!revealedLetters[index] && hintLetter === null) {
+                hintLetter = letter;
+            }
+            if (letter === hintLetter) {
+                revealedLetters[index] = true;
+            }
+        });
+
+        const buttons = document.querySelectorAll('button.letter');
+        buttons.forEach(button => {
+            if (button.textContent === hintLetter && !button.disabled) {
+                button.disabled = true;
+                button.classList.add('correct');
+            }
+        });
+
+        hintsLeft--;
+        document.getElementById('hint-count').textContent = hintsLeft;
+        displayWord();
+        checkWin();
+    }
+
+    function checkWin() {
+        if (revealedLetters.every(Boolean)) {
+            setTimeout(async () => {
+                alert('Поздравляем! Вы угадали слово!');
+                usedWords.push(currentWord); // Добавляем слово в список отгаданных слов
+                resetAttempts();
+                await fetchNewWord();
+                generateLetterControls();
+            }, 100);
+        }
+    }
+
+    function endGame(won) {
+        setTimeout(() => {
+            alert(won ? 'Вы выиграли!' : `Игра окончена! Слово было: ${currentWord}`);
+            resetGame();
+        }, 100);
+    }
+
+    function exitTheme() {
+        resetGame();
+    }
+
+    function resetGame() {
+        document.querySelector('.game-view').style.display = 'none';
+        document.querySelector('.theme-selection').style.display = 'block';
+        document.getElementById('letters').innerHTML = '';
+        document.getElementById('word-letters').innerHTML = '';
+        attemptsLeft = 6;
+        initialHints = 0;  // Сбрасываем подсказки при выходе из темы
+        hintsLeft = 0;
+        fetchThemes();
+    }
+
+    function resetAttempts() {
+        attemptsLeft = 6;
+        document.getElementById('attempts').textContent = `Осталось попыток: ${attemptsLeft}`;
+    }
+
+    window.onload = fetchThemes;
+</script>
+
+</body>
+</html>

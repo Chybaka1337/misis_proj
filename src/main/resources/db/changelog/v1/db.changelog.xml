@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Добавление тематики -->
+    <changeSet id="1" author="user">
+        <insert tableName="theme">
+            <column name="id" value="1"/>
+            <column name="theme" value="Фрукты"/>
+        </insert>
+        <insert tableName="theme">
+            <column name="id" value="2"/>
+            <column name="theme" value="Животные"/>
+        </insert>
+        <insert tableName="theme">
+            <column name="id" value="3"/>
+            <column name="theme" value="Страны"/>
+        </insert>
+    </changeSet>
+
+    <!-- Добавление слов и их связей -->
+
+    <!-- Фрукты -->
+    <changeSet id="2" author="user">
+        <insert tableName="word">
+            <column name="id" value="6"/>
+            <column name="word" value="Яблоко"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="7"/>
+            <column name="word" value="Банан"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="8"/>
+            <column name="word" value="Апельсин"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="9"/>
+            <column name="word" value="Виноград"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="10"/>
+            <column name="word" value="Лимон"/>
+        </insert>
+    </changeSet>
+
+    <!-- Животные -->
+    <changeSet id="3" author="user">
+        <insert tableName="word">
+            <column name="id" value="1"/>
+            <column name="word" value="Лев"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="2"/>
+            <column name="word" value="Тигр"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="3"/>
+            <column name="word" value="Зебра"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="4"/>
+            <column name="word" value="Кит"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="5"/>
+            <column name="word" value="Слон"/>
+        </insert>
+    </changeSet>
+
+    <!-- Страны -->
+    <changeSet id="4" author="user">
+        <insert tableName="word">
+            <column name="id" value="11"/>
+            <column name="word" value="Россия"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="12"/>
+            <column name="word" value="Канада"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="13"/>
+            <column name="word" value="Франция"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="14"/>
+            <column name="word" value="Бразилия"/>
+        </insert>
+        <insert tableName="word">
+            <column name="id" value="15"/>
+            <column name="word" value="Япония"/>
+        </insert>
+    </changeSet>
+
+    <!-- Связи между темами и словами -->
+    <changeSet id="5" author="user">
+        <!-- Животные -->
+        <insert tableName="theme_word">
+            <column name="theme_id" value="2"/>
+            <column name="word_id" value="1"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="2"/>
+            <column name="word_id" value="2"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="2"/>
+            <column name="word_id" value="3"/>
+        </insert>
+        <insert tableName="theme_word">
+
+            <column name="theme_id" value="2"/>
+            <column name="word_id" value="4"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="2"/>
+            <column name="word_id" value="5"/>
+        </insert>
+
+        <!-- Фрукты -->
+        <insert tableName="theme_word">
+            <column name="theme_id" value="1"/>
+            <column name="word_id" value="6"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="1"/>
+            <column name="word_id" value="7"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="1"/>
+            <column name="word_id" value="8"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="1"/>
+            <column name="word_id" value="9"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="1"/>
+            <column name="word_id" value="10"/>
+        </insert>
+
+        <!-- Страны -->
+        <insert tableName="theme_word">
+            <column name="theme_id" value="3"/>
+            <column name="word_id" value="11"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="3"/>
+            <column name="word_id" value="12"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="3"/>
+            <column name="word_id" value="13"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="3"/>
+            <column name="word_id" value="14"/>
+        </insert>
+        <insert tableName="theme_word">
+            <column name="theme_id" value="3"/>
+            <column name="word_id" value="15"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
